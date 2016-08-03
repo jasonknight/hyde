@@ -58,10 +58,16 @@ func CompileDirectory(s Settings, p string) error {
     for _,f := range flist {
         np := []string{p,f.Name()}
         if ( f.IsDir() ) { 
-            CompileDirectory(s,strings.Join(np,"/"))
+            err = CompileDirectory(s,strings.Join(np,"/"))
+            if ( err != nil ) {
+                return err
+            }
             continue 
         }
-        CompileFile(s,strings.Join(np,"/"))
+        err = CompileFile(s,strings.Join(np,"/"))
+        if ( err != nil ) {
+            return err
+        }
     }
 
 
@@ -70,5 +76,23 @@ func CompileDirectory(s Settings, p string) error {
 
 func CompileFile(s Settings, p string) error {
     fmt.Printf("CompileFile [%s]\n",p)
+    err := MakeDestinationPath(s,p)
+    if ( err != nil ) {
+        return err
+    }
+    return nil
+}
+
+func MakeDestinationPath(s Settings, p string) error {
+    var ps []string
+    var fpath string
+    ps = strings.Split(p,"/")
+    ps[0] = s.outdir
+    ps = ps[0:len(ps) - 1]
+    fpath = strings.Join(ps,"/")
+    err := os.MkdirAll(fpath,0777)
+    if ( err !=  nil ) {
+        return err
+    }
     return nil
 }
