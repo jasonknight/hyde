@@ -59,13 +59,16 @@ func registerLinkTo() {
 func registerPartial() {
     RegisterSettingsFilter("partial", func (s *Settings) {
         s.fmap["partial"] = func (name string) string {
-            for k,v := range s.file_ids {
-                if ( k == name ) {
+            for _,v := range s.file_ids {
+                //fmt.Printf("name: %s k: %s id: %s\n",name,k,v.id)
+                if ( name == v.id ) {
                     txt,err := CompileGoPartial(*s,v.src)
                     if ( err == nil ) {
                         return txt
                     }
                     panic(err)
+                } else {
+                    fmt.Printf("%s != %s\n",name,v.id)
                 }
             }
 
@@ -192,11 +195,14 @@ func discoverFileIds(s *Settings, p string) error {
                 url: DestinationURL(*s,strings.Join(np,"/")),
             }
         } else {
-            s.file_ids[fname] = FileEntry{
+            src := strings.Join(np,"/")
+            src_split := strings.Split(src,"/")
+            fid := strings.Join(src_split[1:],"/")
+            s.file_ids[fid] = FileEntry{
                 name: fname,
-                src: strings.Join(np,"/"),
+                src: src,
                 dest: DestinationPath(*s,strings.Join(np,"/")),
-                id: fname,
+                id: fid,
                 url: DestinationURL(*s,strings.Join(np,"/")),
             }
             
