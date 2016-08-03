@@ -11,15 +11,26 @@ import "bytes"
 import "bufio"
 import "regexp"
 
+type FileEntry struct {
+    name string
+    src string
+    dest string
+    url string
+    id string
+}
+
+
 type Settings struct {
     indir string
     outdir string
     url string
     layout string
     prepends []string
-    file_ids map[string]string
+    file_ids map[string]FileEntry
     fmap map[string]interface{}
 }
+
+
 
 type SettingsFilter func(s *Settings)
 var settingsFilters map[string]SettingsFilter
@@ -37,12 +48,30 @@ func registerLinkTo() {
         s.fmap["link_to"] = func (name string) string {
             for k,v := range s.file_ids {
                 if ( k == name ) {
-                    return  "://" + v
+                    return  "://" + v.url
                 }
             }
             return ""
         }
         fmt.Println("Registered link_to")
+    })
+}
+func registerPartial() {
+    RegisterSettingsFilter("partial", func (s *Settings) {
+        s.fmap["partial"] = func (name string) string {
+            for k,v := range s.file_ids {
+                if ( k == name ) {
+                    txt,err := CompileGoPartial(*s,v.src)
+                    if ( err == nil ) {
+                        return txt
+                    }
+                    panic(err)
+                }
+            }
+
+            return ""
+        }
+        fmt.Println("Registered partial")
     })
 }
 func fileExists(p string) bool {
@@ -68,7 +97,7 @@ func main() {
     
     flag.Parse()
     s := Settings{indir: *indir, outdir: *outdir, url: *url}
-    s.file_ids = make(map[string]string)
+    s.file_ids = make(map[string]FileEntry)
     s.fmap = make(map[string]interface{})
     banner()
     fmt.Printf("In %s and out %s\n", s.indir, s.outdir)
@@ -81,6 +110,7 @@ func main() {
     }
     //fmt.Println(s.layout)
     registerLinkTo()
+    registerPartial()
     for _,fn := range settingsFilters {
         fn(&s)
     }
@@ -100,7 +130,7 @@ func main() {
 }
 func printRoutes(s Settings) {
     for k,v := range s.file_ids {
-        fmt.Printf("link_to(\"%s\") => %s\n",k,v)
+        fmt.Printf("link_to(\"%s\") => %s %v\n",k,v.url,v)
     }
 }
 func discoverLayout(s *Settings, d string) error {
@@ -154,8 +184,23 @@ func discoverFileIds(s *Settings, p string) error {
         //fmt.Println(matches)
         if ( len(matches) >= 2 ) {
             //fmt.Printf("id: [%s]\n",matches[1])
-            s.file_ids[ matches[1] ] = DestinationURL(*s,strings.Join(np,"/"))
-        } 
+            s.file_ids[ matches[1] ] = FileEntry{
+                name: fname,
+                src: strings.Join(np,"/"),
+                dest: DestinationPath(*s,strings.Join(np,"/")),
+                id: matches[1],
+                url: DestinationURL(*s,strings.Join(np,"/")),
+            }
+        } else {
+            s.file_ids[fname] = FileEntry{
+                name: fname,
+                src: strings.Join(np,"/"),
+                dest: DestinationPath(*s,strings.Join(np,"/")),
+                id: fname,
+                url: DestinationURL(*s,strings.Join(np,"/")),
+            }
+            
+        }
         
     }
     return nil
@@ -265,6 +310,7 @@ func ConvertPath(s Settings, p string, t string) (string) {
 func CompileGoTemplate(s Settings, p string) (string, error) {
     file_contents,err := ioutil.ReadFile(p)
     if ( err != nil ) {
+
         return "",err
     }
     return CompileGoString(s,p,string(file_contents[:]))
@@ -289,6 +335,25 @@ func CompileGoString(s Settings,name string, text string) (string,error) {
     text = strings.Join(s.prepends,"\n") + "\n" + text
     //fmt.Println("Text to compile is: ", text)
     tmpl, err := template.New(name).Funcs(s.fmap).Parse(text)
+
+    if ( err != nil) {
+        return "",err
+    }
+    var can bytes.Buffer
+    err = tmpl.Execute(&can,s)
+    if (err != nil) {
+        return "",err
+    }
+    return can.String(),nil
+}
+
+func CompileGoPartial(s Settings, p string) (string,error) {
+     file_contents,err := ioutil.ReadFile(p)
+    if ( err != nil ) {
+
+        return "",err
+    }
+    tmpl, err := template.New(p).Funcs(s.fmap).Parse(string(file_contents[:]))
 
     if ( err != nil) {
         return "",err
