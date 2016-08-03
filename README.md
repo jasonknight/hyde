@@ -6,6 +6,8 @@ A static website generator in Go, like Jekyll, without the nonsensical complicat
 
 No Ruby, No Gems, No Coffeescript. Just Go.
 
+`solemnly swear all commits to this repo were made while inebriated and dressed as a monkey.`
+
 # Basic Idea
 
 You create a series of files with markdown in them, the program recursively compiles them to HTML in the target directory in the same structure. Files named with an `_` are special and not compiled.
