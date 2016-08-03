@@ -9,12 +9,14 @@ import "strings"
 import "text/template"
 import "bytes"
 import "bufio"
+import "regexp"
 
 type Settings struct {
     indir string
     outdir string
     layout string
     prepends []string
+    file_ids map[string]string
 }
 func version() string {
     return "v1.0"
@@ -40,10 +42,16 @@ func main() {
     
     flag.Parse()
     s := Settings{indir: *indir, outdir: *outdir}
+    s.file_ids = make(map[string]string)
     banner()
     fmt.Printf("In %s and out %s\n", s.indir, s.outdir)
     s.layout = DefaultLayout()
     err := discoverLayout(&s)
+    if (err != nil) {
+        fmt.Println(err)
+    }
+    
+    err = discoverFileIds(&s,s.indir)
     if (err != nil) {
         fmt.Println(err)
     }
@@ -75,6 +83,40 @@ func discoverLayout(s *Settings) error {
         }
     }
     return errors.New("No Layout Found")
+}
+func discoverFileIds(s *Settings, p string) error {
+    //fmt.Printf("discoverFileIds[%s]\n",p)
+    if ( ! fileExists(p) ) {
+        return errors.New(fmt.Sprintf("%s does not exist",p))
+    }
+    flist,err := ioutil.ReadDir(p)
+    if ( err != nil ) {
+        return err
+    }
+
+    for _,f := range flist {
+        np := []string{p,f.Name()}
+        fname := f.Name()
+        if ( f.IsDir()) { 
+            err = discoverFileIds(s,strings.Join(np,"/"))
+            if ( err != nil ) {
+                return err
+            }
+            continue 
+        }
+        r, err := regexp.Compile("^([\\w\\d]+)--.+")
+        if ( err != nil ) {
+            return err
+        }
+        matches := r.FindStringSubmatch(fname)
+        //fmt.Println(matches)
+        if ( len(matches) >= 2 ) {
+            //fmt.Printf("id: [%s]\n",matches[1])
+            s.file_ids[ matches[1] ] = strings.Join(np,"/")
+        } 
+        
+    }
+    return nil
 }
 func CompileDirectory(s Settings, p string) error {
     fmt.Printf("CompileDirectory [%s]\n",p)
