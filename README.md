@@ -32,4 +32,6 @@ Any file has at least the id of its name. So if you create a file: _footer.html,
 
 Don't move things.
 
- 
+### Why the f***k didn't you use Hugo
+
+Too big, too touchy feely. Have you seen their repo? It's scurry.
