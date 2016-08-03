@@ -12,6 +12,7 @@ import "bytes"
 type Settings struct {
     indir string
     outdir string
+    layout string
 }
 func version() string {
     return "v1.0"
@@ -39,14 +40,40 @@ func main() {
     s := Settings{indir: *indir, outdir: *outdir}
     banner()
     fmt.Printf("In %s and out %s\n", s.indir, s.outdir)
-    fmt.Println(DefaultLayout())
-    err := CompileDirectory(s, s.indir)
+    s.layout = DefaultLayout()
+    err := discoverLayout(&s)
+    if (err != nil) {
+        fmt.Println(err)
+    }
+    fmt.Println(s.layout)
+    fmt.Println("Beginning Compilation")
+    err = CompileDirectory(s, s.indir)
     if ( err != nil ) {
         panic(err)
     }
     fmt.Println("Done.")
 }
-
+func discoverLayout(s *Settings) error {
+    flist,err := ioutil.ReadDir(s.indir)
+    if ( err != nil ) {
+        return err
+    }
+    for _,f := range flist {
+        np := []string{s.indir,f.Name()}
+        if ( f.IsDir() ) { 
+            continue 
+        }
+        if (f.Name() == "_layout.md" ) {
+            file_contents,err := ioutil.ReadFile(strings.Join(np,"/"))
+            if ( err != nil ) {
+                return err
+            }
+            s.layout = string(file_contents[:])
+            return nil
+        }
+    }
+    return errors.New("No Layout Found")
+}
 func CompileDirectory(s Settings, p string) error {
     fmt.Printf("CompileDirectory [%s]\n",p)
     if ( ! fileExists(p) ) {
@@ -113,8 +140,14 @@ func ConvertPath(s Settings, p string, t string) (string,error) {
 
 func CompileGoTemplate(s Settings, p string) (string, error) {
     file_contents,err := ioutil.ReadFile(p)
-
-    tmpl, err := template.New(p).Parse(string(file_contents[:]))
+    if ( err != nil ) {
+        return "",err
+    }
+    return CompileGoString(s,p,string(file_contents[:]))
+    
+}
+func CompileGoString(s Settings,name string, text string) (string,error) {
+    tmpl, err := template.New(name).Parse(text)
 
     if ( err != nil) {
         return "",err
