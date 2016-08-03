@@ -8,11 +8,13 @@ import "errors"
 import "strings"
 import "text/template"
 import "bytes"
+import "bufio"
 
 type Settings struct {
     indir string
     outdir string
     layout string
+    prepends []string
 }
 func version() string {
     return "v1.0"
@@ -45,7 +47,7 @@ func main() {
     if (err != nil) {
         fmt.Println(err)
     }
-    fmt.Println(s.layout)
+    //fmt.Println(s.layout)
     fmt.Println("Beginning Compilation")
     err = CompileDirectory(s, s.indir)
     if ( err != nil ) {
@@ -86,7 +88,11 @@ func CompileDirectory(s Settings, p string) error {
 
     for _,f := range flist {
         np := []string{p,f.Name()}
-        if ( f.IsDir() ) { 
+        fname := f.Name()
+        if (fname[0] == '_') {
+            continue
+        }
+        if ( f.IsDir()) { 
             err = CompileDirectory(s,strings.Join(np,"/"))
             if ( err != nil ) {
                 return err
@@ -113,7 +119,23 @@ func CompileFile(s Settings, p string) error {
     fmt.Printf("Destination: %s => %s\n",dpath, dfile)
 
     compiled,err := CompileGoTemplate(s,p)
-    fmt.Println(compiled)
+
+    if ( err != nil ) {
+        return err
+    }
+    if ( compiled == "" ) {
+        return nil
+    }
+    f, err := os.Create(dfile)
+    if ( err != nil) {
+        return err
+    }
+    w := bufio.NewWriter(f)
+    _, err = w.WriteString(compiled)
+    w.Flush()
+    if ( err != nil ) {
+        return err
+    }
     return nil
 }
 
@@ -147,6 +169,23 @@ func CompileGoTemplate(s Settings, p string) (string, error) {
     
 }
 func CompileGoString(s Settings,name string, text string) (string,error) {
+    // First we parse the string for special directives
+    var flines []string
+    oflines := strings.Split(text,"\n")
+    for _,line := range oflines {
+        if ( len(line) > 2 && line[0] == '#' && line[1] == '!' ) {
+            l2exe := line[3:len(line)]
+            l2exe = fmt.Sprintf("{{%s}}",l2exe)
+            fmt.Println("Prepending ", l2exe)
+            s.prepends = append(s.prepends,l2exe)
+            continue
+        }
+        flines = append(flines,line)
+    }
+    text = strings.Join(flines,"\n")
+    text = strings.Replace(s.layout,"{{.Content}}",text,1)
+    text = strings.Join(s.prepends,"\n") + "\n" + text
+    //fmt.Println("Text to compile is: ", text)
     tmpl, err := template.New(name).Parse(text)
 
     if ( err != nil) {
