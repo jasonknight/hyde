@@ -8,4 +8,10 @@ No Ruby, No Gems, No Coffeescript. Just Go.
 
 # Basic Idea
 
-You create a series of files with markdown in them, the program recursively compiles them to HTML in the target directory in the same structure. 
+You create a series of files with markdown in them, the program recursively compiles them to HTML in the target directory in the same structure.
+
+### Want permalinks?
+
+Don't move things.
+
+ 
