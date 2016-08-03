@@ -1,4 +1,5 @@
-# Hyde - Guaranteed written by Drunken Monkeys
+# Hyde
+## Guaranteed to be written by Drunken Monkeys 
 
 ### For when you want a static website, not a Ph. D in Jekyll
 
