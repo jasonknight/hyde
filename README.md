@@ -22,6 +22,10 @@ Each directory can have its own _layout.html
 
 Naming a file like this (replacing xxxx with some alphanumeric id) allows you to refer to that file anywere with functions like {{link_to "xxxx"}} to get a full absolute URL.
 
+### Partials (or any file really)
+
+Any file has at least the id of its name. So if you create a file: _footer.html, then you can find it with the `partial` command, i.e. `{{partial "_footer.html"}}`
+
 ### Want permalinks?
 
 Don't move things.
