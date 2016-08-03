@@ -6,7 +6,7 @@ A static website generator in Go, like Jekyll, without the nonsensical complicat
 
 No Ruby, No Gems, No Coffeescript. Just Go.
 
-`solemnly swear all commits to this repo were made while inebriated and dressed as a monkey.`
+`I solemnly swear all commits to this repo were made while inebriated and dressed as a monkey.`
 
 # Basic Idea
 
