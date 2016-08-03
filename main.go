@@ -73,12 +73,9 @@ func main() {
     banner()
     fmt.Printf("In %s and out %s\n", s.indir, s.outdir)
     s.layout = DefaultLayout()
-    err := discoverLayout(&s)
-    if (err != nil) {
-        fmt.Println(err)
-    }
     
-    err = discoverFileIds(&s,s.indir)
+    
+    err := discoverFileIds(&s,s.indir)
     if (err != nil) {
         fmt.Println(err)
     }
@@ -106,22 +103,24 @@ func printRoutes(s Settings) {
         fmt.Printf("link_to(\"%s\") => %s\n",k,v)
     }
 }
-func discoverLayout(s *Settings) error {
-    flist,err := ioutil.ReadDir(s.indir)
+func discoverLayout(s *Settings, d string) error {
+    flist,err := ioutil.ReadDir(d)
     if ( err != nil ) {
         return err
     }
     for _,f := range flist {
-        np := []string{s.indir,f.Name()}
+        np := []string{d,f.Name()}
         if ( f.IsDir() ) { 
             continue 
         }
-        if (f.Name() == "_layout.md" ) {
+        if (f.Name() == "_layout.html" ) {
             file_contents,err := ioutil.ReadFile(strings.Join(np,"/"))
             if ( err != nil ) {
                 return err
             }
+            fmt.Println("Discovered layout for ", d)
             s.layout = string(file_contents[:])
+
             return nil
         }
     }
@@ -165,6 +164,10 @@ func CompileDirectory(s Settings, p string) error {
     fmt.Printf("CompileDirectory [%s]\n",p)
     if ( ! fileExists(p) ) {
         return errors.New(fmt.Sprintf("%s does not exist",p))
+    }
+    err := discoverLayout(&s,p)
+    if (err != nil) {
+        fmt.Println(err)
     }
     flist,err := ioutil.ReadDir(p)
     if ( err != nil ) {

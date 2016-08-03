@@ -12,11 +12,11 @@ You create a series of files with markdown in them, the program recursively comp
 
 ## Special files
 
-### _layout.md
+### _layout.html
 
 Will be picked up by the compiler and overrides the default compiled in. Only requirement is the special action {{.Content}}.
 
-Each directory can have its own _layout.md
+Each directory can have its own _layout.html
 
 ### xxxx--some-file-name.md
 
