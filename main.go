@@ -6,6 +6,8 @@ import "io/ioutil"
 import "os"
 import "errors"
 import "strings"
+import "text/template"
+import "bytes"
 
 type Settings struct {
     indir string
@@ -76,23 +78,51 @@ func CompileDirectory(s Settings, p string) error {
 
 func CompileFile(s Settings, p string) error {
     fmt.Printf("CompileFile [%s]\n",p)
-    err := MakeDestinationPath(s,p)
+    dpath,err := MakeDestinationPath(s,p)
     if ( err != nil ) {
         return err
     }
+    dfile,_ := ConvertPath(s,dpath,"html")
+    fmt.Printf("Destination: %s => %s\n",dpath, dfile)
+
+    compiled,err := CompileGoTemplate(s,p)
+    fmt.Println(compiled)
     return nil
 }
 
-func MakeDestinationPath(s Settings, p string) error {
+func MakeDestinationPath(s Settings, p string) (string,error) {
     var ps []string
+    var tps []string
     var fpath string
     ps = strings.Split(p,"/")
     ps[0] = s.outdir
-    ps = ps[0:len(ps) - 1]
-    fpath = strings.Join(ps,"/")
+    tps = ps[0:len(ps) - 1]
+    fpath = strings.Join(tps,"/")
     err := os.MkdirAll(fpath,0777)
     if ( err !=  nil ) {
-        return err
+        return "",err
     }
-    return nil
+    return strings.Join(ps,"/"),nil
+}
+
+func ConvertPath(s Settings, p string, t string) (string,error) {
+    parts := strings.Split(p,".")
+    parts[len(parts)-1] = t
+    return strings.Join(parts,"."),nil
+}
+
+func CompileGoTemplate(s Settings, p string) (string, error) {
+    file_contents,err := ioutil.ReadFile(p)
+
+    tmpl, err := template.New(p).Parse(string(file_contents[:]))
+
+    if ( err != nil) {
+        return "",err
+    }
+    var can bytes.Buffer
+    err = tmpl.Execute(&can,s)
+    if (err != nil) {
+        return "",err
+    }
+    return can.String(),nil
 }
