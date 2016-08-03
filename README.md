@@ -14,7 +14,13 @@ You create a series of files with markdown in them, the program recursively comp
 
 ### _layout.md
 
-Will be picked up by the compiler and overrides the default compiled in. Only requirement is the special action {{.Content}}
+Will be picked up by the compiler and overrides the default compiled in. Only requirement is the special action {{.Content}}.
+
+Each directory can have its own _layout.md
+
+### xxxx--some-file-name.md
+
+Naming a file like this (replacing xxxx with some alphanumeric id) allows you to refer to that file anywere with functions like {{link_to "xxxx"}} to get a full absolute URL.
 
 ### Want permalinks?
 

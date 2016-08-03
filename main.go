@@ -37,7 +37,7 @@ func registerLinkTo() {
         s.fmap["link_to"] = func (name string) string {
             for k,v := range s.file_ids {
                 if ( k == name ) {
-                    return v
+                    return  "://" + v
                 }
             }
             return ""
