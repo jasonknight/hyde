@@ -30,21 +30,7 @@ type Settings struct {
 func init() {
     settingsFilters = make(map[string]SettingsFilter)
 }
-func version() string {
-    return "v1.0"
-}
 
-func fileExists(p string) bool {
-    if _, err := os.Stat(p); os.IsNotExist(err) {
-        return false
-    }
-    return true
-}
-func banner() {
-    fmt.Println("*******************************************************")
-    fmt.Printf("*                       Hyde %s                     *\n",version())
-    fmt.Println("*******************************************************")
-}
 
 func main() {
     var (

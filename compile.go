@@ -52,7 +52,12 @@ func CompileFile(s Settings, p string) error {
     if ( err != nil ) {
         return err
     }
-    dfile := ConvertPath(s,dpath,"html")
+    var dfile string
+    if ( IsMarkdown(p) ) {
+        dfile = ConvertPath(s,dpath,"html")
+    } else {
+        dfile = ConvertPath(s,dpath,FileType(p))
+    }
     fmt.Printf("Destination: %s => %s\n",dpath, dfile)
 
     compiled,err := CompileGoTemplate(s,p)
@@ -81,26 +86,30 @@ func CompileGoTemplate(s Settings, p string) (string, error) {
 
         return "",err
     }
-    return CompileGoString(s,p,string(file_contents[:]))
+    return CompileGoString(s,p,string(file_contents[:]),true)
     
 }
-func CompileGoString(s Settings,name string, text string) (string,error) {
+func CompileGoString(s Settings,name string, text string, should_layout bool) (string,error) {
     // First we parse the string for special directives
-    var flines []string
-    oflines := strings.Split(text,"\n")
-    for _,line := range oflines {
-        if ( len(line) > 2 && line[0] == '#' && line[1] == '!' ) {
-            l2exe := line[3:len(line)]
-            l2exe = fmt.Sprintf("{{%s}}",l2exe)
-            fmt.Println("Prepending ", l2exe)
-            s.prepends = append(s.prepends,l2exe)
-            continue
+    
+    if ( should_layout ) {
+        var flines []string
+        oflines := strings.Split(text,"\n")
+        for _,line := range oflines {
+            if ( len(line) > 2 && line[0] == '#' && line[1] == '!' ) {
+                l2exe := line[3:len(line)]
+                l2exe = fmt.Sprintf("{{%s}}",l2exe)
+                fmt.Println("Prepending ", l2exe)
+                s.prepends = append(s.prepends,l2exe)
+                continue
+            }
+            flines = append(flines,line)
         }
-        flines = append(flines,line)
+        text = strings.Join(flines,"\n")
+        text = strings.Replace(s.layout,"{{.Content}}",text,1) 
+        text = strings.Join(s.prepends,"\n") + "\n" + text
     }
-    text = strings.Join(flines,"\n")
-    text = strings.Replace(s.layout,"{{.Content}}",text,1)
-    text = strings.Join(s.prepends,"\n") + "\n" + text
+    
     //fmt.Println("Text to compile is: ", text)
     tmpl, err := template.New(name).Funcs(s.fmap).Parse(text)
 
