@@ -9,6 +9,8 @@ No Ruby, No Gems, No Coffeescript. Just Go.
 
 `I solemnly swear all commits to this repo were made while inebriated and dressed as a monkey.`
 
+![XKCD](http://imgs.xkcd.com/comics/ballmer_peak.png)
+
 # Basic Idea
 
 You create a series of files with markdown in them, the program recursively compiles them to HTML in the target directory in the same structure. Files named with an `_` are special and not compiled.
