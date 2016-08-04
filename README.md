@@ -13,9 +13,17 @@ No Ruby, No Gems, No Coffeescript. Just Go.
 
 # Basic Idea
 
-You create a series of files with markdown in them, the program recursively compiles them to HTML in the target directory in the same structure. Files named with an `_` are special and not compiled. ANY file not named with an `_` will end up in the target directory, and ALL files are run through the templating engine. Files named with `.md` are run through the templating engine and then wrapped in the `layout`.
+You create a series of files with markdown in them, the program recursively compiles them to HTML in the target directory in the same structure. Files named with an `_` are special and not compiled. ANY file not named with an `_` will end up in the target directory, and ALL files are run through the templating engine. Files named with `.md` are wrapped in the `layout`, then run through the templating engine, then the Markdown engine.
 
 If you DON'T want to use layouts (or just for a directory), then create a `_layout.html` file with just the action tag `{{.Content}}` and then handle header and footer, or whatever on a per file basis.
+
+You can setup variables on a per file basis by placing action code in a shebang line.
+
+`#! {{$title = "This is the page title"}}`
+
+Notice that it is '#!{SPACE}' not simply '#!'. You can set any variables you want, like meta_descriptions and so on, or select specific CSS. The system doesn't require ANY of this, it's all based on how you do the layout. You can echo out the default layout with the command:
+
+`./hyde -layout`
 
 # Special files
 

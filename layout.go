@@ -3,9 +3,10 @@ func DefaultLayout() string {
     return `
     <html>
         <head>
-            <title>{{.Title}}</title>
+            <title>{{$title}}</title>
         </head>
         <body>
+            <h1>{{$title}}</h1>
             {{.Content}}
         </body>
     </html>

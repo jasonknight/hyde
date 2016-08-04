@@ -6,9 +6,7 @@ import "io/ioutil"
 import "os"
 import "errors"
 import "strings"
-import "text/template"
-import "bytes"
-import "bufio"
+
 import "regexp"
 
 type FileEntry struct {
@@ -18,7 +16,6 @@ type FileEntry struct {
     url string
     id string
 }
-
 
 type Settings struct {
     indir string
@@ -30,53 +27,13 @@ type Settings struct {
     fmap map[string]interface{}
 }
 
-
-
-type SettingsFilter func(s *Settings)
-var settingsFilters map[string]SettingsFilter
-func RegisterSettingsFilter(name string, f SettingsFilter) {
-    settingsFilters[name] = f
-}
 func init() {
     settingsFilters = make(map[string]SettingsFilter)
 }
 func version() string {
     return "v1.0"
 }
-func registerLinkTo() {
-    RegisterSettingsFilter("link_to", func (s *Settings) {
-        s.fmap["link_to"] = func (name string) string {
-            for k,v := range s.file_ids {
-                if ( k == name ) {
-                    return  "://" + v.url
-                }
-            }
-            return ""
-        }
-        fmt.Println("Registered link_to")
-    })
-}
-func registerPartial() {
-    RegisterSettingsFilter("partial", func (s *Settings) {
-        s.fmap["partial"] = func (name string) string {
-            for _,v := range s.file_ids {
-                //fmt.Printf("name: %s k: %s id: %s\n",name,k,v.id)
-                if ( name == v.id ) {
-                    txt,err := CompileGoPartial(*s,v.src)
-                    if ( err == nil ) {
-                        return txt
-                    }
-                    panic(err)
-                } else {
-                    fmt.Printf("%s != %s\n",name,v.id)
-                }
-            }
 
-            return ""
-        }
-        fmt.Println("Registered partial")
-    })
-}
 func fileExists(p string) bool {
     if _, err := os.Stat(p); os.IsNotExist(err) {
         return false
@@ -95,10 +52,14 @@ func main() {
         outdir = flag.String("out","./_dest", "Where to put the output html")
         action = flag.String("action","compile","compile|routes")
         url = flag.String("url","http://localhost","the url of your site")
-
+        show_layout = flag.Bool("layout",false,"echo the default template")
     )
     
     flag.Parse()
+    if ( *show_layout == true ) {
+        fmt.Println(DefaultLayout())
+        return
+    }
     s := Settings{indir: *indir, outdir: *outdir, url: *url}
     s.file_ids = make(map[string]FileEntry)
     s.fmap = make(map[string]interface{})
@@ -211,72 +172,7 @@ func discoverFileIds(s *Settings, p string) error {
     }
     return nil
 }
-func CompileDirectory(s Settings, p string) error {
-    fmt.Printf("CompileDirectory [%s]\n",p)
-    if ( ! fileExists(p) ) {
-        return errors.New(fmt.Sprintf("%s does not exist",p))
-    }
-    err := discoverLayout(&s,p)
-    if (err != nil) {
-        fmt.Println(err)
-    }
-    flist,err := ioutil.ReadDir(p)
-    if ( err != nil ) {
-        return err
-    }
 
-    for _,f := range flist {
-        np := []string{p,f.Name()}
-        fname := f.Name()
-        if (fname[0] == '_') {
-            continue
-        }
-        if ( f.IsDir()) { 
-            err = CompileDirectory(s,strings.Join(np,"/"))
-            if ( err != nil ) {
-                return err
-            }
-            continue 
-        }
-        err = CompileFile(s,strings.Join(np,"/"))
-        if ( err != nil ) {
-            return err
-        }
-    }
-
-
-    return nil
-}
-
-func CompileFile(s Settings, p string) error {
-    fmt.Printf("CompileFile [%s]\n",p)
-    dpath,err := MakeDestinationPath(s,p)
-    if ( err != nil ) {
-        return err
-    }
-    dfile := ConvertPath(s,dpath,"html")
-    fmt.Printf("Destination: %s => %s\n",dpath, dfile)
-
-    compiled,err := CompileGoTemplate(s,p)
-
-    if ( err != nil ) {
-        return err
-    }
-    if ( compiled == "" ) {
-        return nil
-    }
-    f, err := os.Create(dfile)
-    if ( err != nil) {
-        return err
-    }
-    w := bufio.NewWriter(f)
-    _, err = w.WriteString(compiled)
-    w.Flush()
-    if ( err != nil ) {
-        return err
-    }
-    return nil
-}
 
 func MakeDestinationPath(s Settings, p string) (string,error) {
     var ps []string
@@ -313,61 +209,4 @@ func ConvertPath(s Settings, p string, t string) (string) {
     return strings.Join(parts,".")
 }
 
-func CompileGoTemplate(s Settings, p string) (string, error) {
-    file_contents,err := ioutil.ReadFile(p)
-    if ( err != nil ) {
 
-        return "",err
-    }
-    return CompileGoString(s,p,string(file_contents[:]))
-    
-}
-func CompileGoString(s Settings,name string, text string) (string,error) {
-    // First we parse the string for special directives
-    var flines []string
-    oflines := strings.Split(text,"\n")
-    for _,line := range oflines {
-        if ( len(line) > 2 && line[0] == '#' && line[1] == '!' ) {
-            l2exe := line[3:len(line)]
-            l2exe = fmt.Sprintf("{{%s}}",l2exe)
-            fmt.Println("Prepending ", l2exe)
-            s.prepends = append(s.prepends,l2exe)
-            continue
-        }
-        flines = append(flines,line)
-    }
-    text = strings.Join(flines,"\n")
-    text = strings.Replace(s.layout,"{{.Content}}",text,1)
-    text = strings.Join(s.prepends,"\n") + "\n" + text
-    //fmt.Println("Text to compile is: ", text)
-    tmpl, err := template.New(name).Funcs(s.fmap).Parse(text)
-
-    if ( err != nil) {
-        return "",err
-    }
-    var can bytes.Buffer
-    err = tmpl.Execute(&can,s)
-    if (err != nil) {
-        return "",err
-    }
-    return can.String(),nil
-}
-
-func CompileGoPartial(s Settings, p string) (string,error) {
-     file_contents,err := ioutil.ReadFile(p)
-    if ( err != nil ) {
-
-        return "",err
-    }
-    tmpl, err := template.New(p).Funcs(s.fmap).Parse(string(file_contents[:]))
-
-    if ( err != nil) {
-        return "",err
-    }
-    var can bytes.Buffer
-    err = tmpl.Execute(&can,s)
-    if (err != nil) {
-        return "",err
-    }
-    return can.String(),nil
-}
