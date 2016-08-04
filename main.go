@@ -25,6 +25,7 @@ type Settings struct {
 	prepends []string
 	file_ids map[string]FileEntry
 	fmap     map[string]interface{}
+	HydeMsg string
 }
 
 func init() {
@@ -51,7 +52,7 @@ func main() {
 	banner()
 	fmt.Printf("In %s and out %s\n", s.indir, s.outdir)
 	s.layout = DefaultLayout()
-
+	s.HydeMsg = HydeMsg()
 	err := discoverFileIds(&s, s.indir)
 	if err != nil {
 		fmt.Println(err)

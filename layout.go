@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 func DefaultLayout() string {
 	return `
     <!DOCTYPE html>
@@ -23,4 +25,9 @@ func DefaultLayout() string {
         </body>
     </html>
     `
+}
+func HydeMsg() string {
+    return fmt.Sprintf(`
+        <div id="hyde-msg">This site statically compiled with Hyde %s</div>
+    `,version())
 }

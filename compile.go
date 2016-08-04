@@ -5,6 +5,7 @@ import "errors"
 import "strings"
 import "io/ioutil"
 import "os"
+import "io"
 import "bytes"
 import "text/template"
 import "bufio"
@@ -38,7 +39,12 @@ func CompileDirectory(s Settings, p string) error {
 			}
 			continue
 		}
-		err = CompileFile(s, strings.Join(np, "/"))
+		if ( IsCompilable(fname) ) {
+			err = CompileFile(s, strings.Join(np, "/"))
+		} else {
+			err = MoveFile(s, strings.Join(np,"/"))
+		}
+		
 		if err != nil {
 			return err
 		}
@@ -46,7 +52,30 @@ func CompileDirectory(s Settings, p string) error {
 
 	return nil
 }
-
+func MoveFile(s Settings, p string) error {
+	dpath, err := MakeDestinationPath(s, p)
+	dfile := ConvertPath(s, dpath, FileType(p))
+	in, err := os.Open(p)
+    if err != nil {
+        return err
+    }
+    defer in.Close()
+    out, err := os.Create(dfile)
+    if err != nil {
+        return err
+    }
+    defer func() {
+        cerr := out.Close()
+        if err == nil {
+            err = cerr
+        }
+    }()
+    if _, err = io.Copy(out, in); err != nil {
+        return err
+    }
+    err = out.Sync()
+    return err
+}
 func CompileFile(s Settings, p string) error {
 	fmt.Printf("CompileFile [%s]\n", p)
 	var should_layout bool

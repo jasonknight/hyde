@@ -24,6 +24,16 @@ func FileType(p string) string {
 	ftype := parts[len(parts)-1]
 	return ftype
 }
+func IsCompilable(p string) bool {
+	ftypes := []string{"md","htm","html","css","js","txt","csv","json","xml"}
+	ftype := FileType(p)
+	for _,t := range ftypes {
+		if ( ftype == t) {
+			return true
+		}
+	}
+	return false
+}
 func IsMarkdown(p string) bool {
 	ftype := FileType(p)
 	if ftype == "md" || ftype == "markdown" {
