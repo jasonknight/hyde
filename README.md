@@ -31,6 +31,8 @@ Naming a file like this (replacing xxxx with some alphanumeric id) allows you to
 
 Any file has at least the id of its name. So if you create a file: _footer.html, then you can find it with the `partial` command, i.e. `{{partial "_footer.html"}}`
 
+The id is literally the path to that file (always absolute path), so to get to a tidbit of code in `_src/some/sub/dir/_partial.md` you would use `{{partial "some/sub/dir/_partial.md"}}`. NOTE the missing `_src`, the root is omitted in all ids, because the only thing that actually changes is the root, from _src to _dest.
+
 ### Want permalinks?
 
 Don't move things.
