@@ -27,6 +27,7 @@ func CompileDirectory(s Settings, p string) error {
 	for _, f := range flist {
 		np := []string{p, f.Name()}
 		fname := f.Name()
+		fmt.Println("!! fname = ",fname)
 		if fname[0] == '_' {
 			continue
 		}
@@ -70,14 +71,7 @@ func CompileFile(s Settings, p string) error {
 	if err != nil {
 		return err
 	}
-	if compiled == "" {
-		return nil
-	}
-	if IsMarkdown(p) {
-		// run it through the Markdown Processor
-		otp := blackfriday.MarkdownCommon([]byte(compiled))
-		compiled = string(otp)
-	}
+	
 	f, err := os.Create(dfile)
 	if err != nil {
 		return err
@@ -91,17 +85,22 @@ func CompileFile(s Settings, p string) error {
 	return nil
 }
 func CompileGoTemplate(s Settings, p string, should_layout bool) (string, error) {
+	fmt.Printf("CompileGoTemplate [%s]\n",p)
 	file_contents, err := ioutil.ReadFile(p)
 	if err != nil {
 
 		return "", err
+	}
+	if IsMarkdown(p) {
+		// run it through the Markdown Processor
+		file_contents = RunMarkdown(s,p,file_contents)
 	}
 	return CompileGoString(s, p, string(file_contents[:]), should_layout)
 
 }
 func CompileGoString(s Settings, name string, text string, should_layout bool) (string, error) {
 	// First we parse the string for special directives
-
+	fmt.Printf("CompileGoString [%s]\n",name)
 	if should_layout {
 		var flines []string
 		oflines := strings.Split(text, "\n")
@@ -116,11 +115,12 @@ func CompileGoString(s Settings, name string, text string, should_layout bool) (
 			flines = append(flines, line)
 		}
 		text = strings.Join(flines, "\n")
+
 		text = strings.Replace(s.layout, "{{.Content}}", text, 1)
 		text = strings.Join(s.prepends, "\n") + "\n" + text
 	}
 
-	//fmt.Println("Text to compile is: ", text)
+	fmt.Println("Text to compile is: ", text)
 	tmpl, err := template.New(name).Funcs(s.fmap).Parse(text)
 
 	if err != nil {
@@ -151,4 +151,23 @@ func CompileGoPartial(s Settings, p string) (string, error) {
 		return "", err
 	}
 	return can.String(), nil
+}
+
+func RunMarkdown(s Settings, p string, txt []byte) []byte {
+	var flines []string
+	var prepends []string
+	oflines := strings.Split(string(txt), "\n")
+	for _, line := range oflines {
+		if len(line) > 2 && line[0] == '#' && line[1] == '!' {
+			l2exe := line
+
+			prepends = append(prepends, l2exe)
+			continue
+		}
+		flines = append(flines, line)
+	}
+	t_txt := strings.Join(flines, "\n")
+	p_txt := strings.Join(prepends,"\n")
+	f_txt := string(blackfriday.MarkdownCommon([]byte(t_txt)))
+	return []byte(p_txt + "\n" + f_txt)
 }

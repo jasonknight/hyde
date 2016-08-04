@@ -176,12 +176,22 @@ func DestinationPath(s Settings, p string) string {
 	var ps []string
 	ps = strings.Split(p, "/")
 	ps[0] = s.outdir
-	return ConvertPath(s, strings.Join(ps, "/"), "html")
+	if (IsMarkdown(p)) {
+		return ConvertPath(s, strings.Join(ps, "/"), "html")
+	} else {
+		return ConvertPath(s, strings.Join(ps, "/"), FileType(p))
+	}
+	
 }
 
 func DestinationURL(s Settings, p string) string {
 	var ps []string
-	ps = strings.Split(ConvertPath(s, p, "html"), "/")
+	if (IsMarkdown(p)) {
+		ps = strings.Split(ConvertPath(s, p, "html"), "/")
+	} else {
+		ps = strings.Split(ConvertPath(s, p, FileType(p)), "/")
+	}
+	
 	ps[0] = s.url
 	return strings.Join(ps, "/")
 }
