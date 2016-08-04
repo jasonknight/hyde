@@ -8,6 +8,7 @@ import "os"
 import "bytes"
 import "text/template"
 import "bufio"
+import "github.com/russross/blackfriday"
 
 func CompileDirectory(s Settings, p string) error {
     fmt.Printf("CompileDirectory [%s]\n",p)
@@ -48,25 +49,35 @@ func CompileDirectory(s Settings, p string) error {
 
 func CompileFile(s Settings, p string) error {
     fmt.Printf("CompileFile [%s]\n",p)
+    var should_layout bool
     dpath,err := MakeDestinationPath(s,p)
     if ( err != nil ) {
         return err
     }
     var dfile string
     if ( IsMarkdown(p) ) {
+        should_layout = true
         dfile = ConvertPath(s,dpath,"html")
     } else {
         dfile = ConvertPath(s,dpath,FileType(p))
     }
+    if ( IsCSS(p) || IsJS(p) ) {
+        should_layout = false
+    } 
     fmt.Printf("Destination: %s => %s\n",dpath, dfile)
 
-    compiled,err := CompileGoTemplate(s,p)
+    compiled,err := CompileGoTemplate(s,p,should_layout)
 
     if ( err != nil ) {
         return err
     }
     if ( compiled == "" ) {
         return nil
+    }
+    if ( IsMarkdown(p) ) {
+        // run it through the Markdown Processor
+        otp := blackfriday.MarkdownBasic([]byte(compiled))
+        compiled = string(otp)
     }
     f, err := os.Create(dfile)
     if ( err != nil) {
@@ -80,13 +91,13 @@ func CompileFile(s Settings, p string) error {
     }
     return nil
 }
-func CompileGoTemplate(s Settings, p string) (string, error) {
+func CompileGoTemplate(s Settings, p string, should_layout bool) (string, error) {
     file_contents,err := ioutil.ReadFile(p)
     if ( err != nil ) {
 
         return "",err
     }
-    return CompileGoString(s,p,string(file_contents[:]),true)
+    return CompileGoString(s,p,string(file_contents[:]),should_layout)
     
 }
 func CompileGoString(s Settings,name string, text string, should_layout bool) (string,error) {
