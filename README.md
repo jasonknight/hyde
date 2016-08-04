@@ -13,9 +13,11 @@ No Ruby, No Gems, No Coffeescript. Just Go.
 
 # Basic Idea
 
-You create a series of files with markdown in them, the program recursively compiles them to HTML in the target directory in the same structure. Files named with an `_` are special and not compiled.
+You create a series of files with markdown in them, the program recursively compiles them to HTML in the target directory in the same structure. Files named with an `_` are special and not compiled. ANY file not named with an `_` will end up in the target directory, and ALL files are run through the templating engine. Files named with `.md` are run through the templating engine and then wrapped in the `layout`.
 
-## Special files
+If you DON'T want to use layouts (or just for a directory), then create a `_layout.html` file with just the action tag `{{.Content}}` and then handle header and footer, or whatever on a per file basis.
+
+# Special files
 
 ### _layout.html
 
@@ -33,10 +35,12 @@ Any file has at least the id of its name. So if you create a file: _footer.html,
 
 The id is literally the path to that file (always absolute path), so to get to a tidbit of code in `_src/some/sub/dir/_partial.md` you would use `{{partial "some/sub/dir/_partial.md"}}`. NOTE the missing `_src`, the root is omitted in all ids, because the only thing that actually changes is the root, from _src to _dest.
 
+All files are run through the template engine. If you name a file with `.md` suffix, it will be run through the template engine and then the Markdown engine.
+
 ### Want permalinks?
 
 Don't move things.
 
 ### Why the f***k didn't you use Hugo
 
-Too big, too touchy feely. Have you seen their repo? It's scurry.
+Too big, too touchy feely. Have you seen their repo? It's scurry. Also it's good practice as a programmer to build your own systems as often as you can. It's how you learn to program. Otherwise, you're just copying and pasting all the time from the work of others. That makes you a `coder`. 
