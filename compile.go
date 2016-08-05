@@ -9,7 +9,7 @@ import "io"
 import "bytes"
 import "text/template"
 import "bufio"
-import "github.com/russross/blackfriday"
+import "github.com/jasonknight/blackfriday"
 
 func CompileDirectory(s Settings, p string) error {
 	fmt.Printf("CompileDirectory [%s]\n", p)

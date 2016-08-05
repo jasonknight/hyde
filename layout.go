@@ -28,6 +28,6 @@ func DefaultLayout() string {
 }
 func HydeMsg() string {
 	return fmt.Sprintf(`
-        <div id="hyde-msg">This site statically compiled with Hyde %s</div>
+        <div id="hyde-msg" class="note info hyde-msg">This site statically compiled with Hyde %s</div>
     `, version())
 }
