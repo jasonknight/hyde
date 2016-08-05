@@ -19,7 +19,7 @@ If you DON'T want to use layouts (or just for a directory), then create a `_layo
 
 You can setup variables on a per file basis by placing action code in a shebang line.
 
-`#! {{$title = "This is the page title"}}`
+`#! {{$title := "This is the page title"}}`
 
 Notice that it is '#!{SPACE}' not simply '#!'. You can set any variables you want, like meta_descriptions and so on, or select specific CSS. The system doesn't require ANY of this, it's all based on how you do the layout. You can echo out the default layout with the command:
 
@@ -35,7 +35,9 @@ Each directory can have its own _layout.html
 
 ### xxxx--some-file-name.md
 
-Naming a file like this (replacing xxxx with some alphanumeric id) allows you to refer to that file anywere with functions like `{{link_to "xxxx"}}` to get a full absolute URL.
+Naming a file like this (replacing xxxx with some alphanumeric id) allows you to refer to that file anywere with functions like `{{link_to "xxxx"}}` to get a full absolute URL (minus the http). 
+
+Example: `[Home](https://{{link_to "index.md"}})`
 
 ### Partials (or any file really)
 
