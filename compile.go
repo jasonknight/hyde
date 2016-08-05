@@ -28,7 +28,7 @@ func CompileDirectory(s Settings, p string) error {
 	for _, f := range flist {
 		np := []string{p, f.Name()}
 		fname := f.Name()
-		fmt.Println("!! fname = ",fname)
+		fmt.Println("!! fname = ", fname)
 		if fname[0] == '_' {
 			continue
 		}
@@ -39,12 +39,12 @@ func CompileDirectory(s Settings, p string) error {
 			}
 			continue
 		}
-		if ( IsCompilable(fname) ) {
+		if IsCompilable(fname) {
 			err = CompileFile(s, strings.Join(np, "/"))
 		} else {
-			err = MoveFile(s, strings.Join(np,"/"))
+			err = MoveFile(s, strings.Join(np, "/"))
 		}
-		
+
 		if err != nil {
 			return err
 		}
@@ -56,25 +56,25 @@ func MoveFile(s Settings, p string) error {
 	dpath, err := MakeDestinationPath(s, p)
 	dfile := ConvertPath(s, dpath, FileType(p))
 	in, err := os.Open(p)
-    if err != nil {
-        return err
-    }
-    defer in.Close()
-    out, err := os.Create(dfile)
-    if err != nil {
-        return err
-    }
-    defer func() {
-        cerr := out.Close()
-        if err == nil {
-            err = cerr
-        }
-    }()
-    if _, err = io.Copy(out, in); err != nil {
-        return err
-    }
-    err = out.Sync()
-    return err
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.Create(dfile)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		cerr := out.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
+	if _, err = io.Copy(out, in); err != nil {
+		return err
+	}
+	err = out.Sync()
+	return err
 }
 func CompileFile(s Settings, p string) error {
 	fmt.Printf("CompileFile [%s]\n", p)
@@ -100,7 +100,7 @@ func CompileFile(s Settings, p string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	f, err := os.Create(dfile)
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func CompileFile(s Settings, p string) error {
 	return nil
 }
 func CompileGoTemplate(s Settings, p string, should_layout bool) (string, error) {
-	fmt.Printf("CompileGoTemplate [%s]\n",p)
+	fmt.Printf("CompileGoTemplate [%s]\n", p)
 	file_contents, err := ioutil.ReadFile(p)
 	if err != nil {
 
@@ -122,14 +122,14 @@ func CompileGoTemplate(s Settings, p string, should_layout bool) (string, error)
 	}
 	if IsMarkdown(p) {
 		// run it through the Markdown Processor
-		file_contents = RunMarkdown(s,p,file_contents)
+		file_contents = RunMarkdown(s, p, file_contents)
 	}
 	return CompileGoString(s, p, string(file_contents[:]), should_layout)
 
 }
 func CompileGoString(s Settings, name string, text string, should_layout bool) (string, error) {
 	// First we parse the string for special directives
-	fmt.Printf("CompileGoString [%s]\n",name)
+	fmt.Printf("CompileGoString [%s]\n", name)
 	if should_layout {
 		var flines []string
 		oflines := strings.Split(text, "\n")
@@ -196,7 +196,7 @@ func RunMarkdown(s Settings, p string, txt []byte) []byte {
 		flines = append(flines, line)
 	}
 	t_txt := strings.Join(flines, "\n")
-	p_txt := strings.Join(prepends,"\n")
+	p_txt := strings.Join(prepends, "\n")
 	f_txt := string(blackfriday.MarkdownCommon([]byte(t_txt)))
 	return []byte(p_txt + "\n" + f_txt)
 }

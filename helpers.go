@@ -25,10 +25,10 @@ func FileType(p string) string {
 	return ftype
 }
 func IsCompilable(p string) bool {
-	ftypes := []string{"md","htm","html","css","js","txt","csv","json","xml"}
+	ftypes := []string{"md", "htm", "html", "css", "js", "txt", "csv", "json", "xml"}
 	ftype := FileType(p)
-	for _,t := range ftypes {
-		if ( ftype == t) {
+	for _, t := range ftypes {
+		if ftype == t {
 			return true
 		}
 	}
