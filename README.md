@@ -35,13 +35,14 @@ Each directory can have its own _layout.html
 
 ### xxxx--some-file-name.md
 
-Naming a file like this (replacing xxxx with some alphanumeric id) allows you to refer to that file anywere with functions like `{{link_to "xxxx"}}` to get a full absolute URL (minus the http). 
+Naming a file like this (replacing xxxx with some alphanumeric id) allows you to refer to that file anywere with functions like `{{link_to "xxxx"}}` to get an absolute path. 
 
-Example: `[Home](https://{{link_to "index.md"}})`
+Example: `[Home]({{link_to "index.md"}})` will generate /index.html.
+Example: `[Local Index]({{link_to "local/index.md"}})` will generate /local/index.html
 
 ### Partials (or any file really)
 
-Any file has at least the id of its name. So if you create a file: _footer.html, then you can find it with the `partial` command, i.e. `{{partial "_footer.html"}}`
+Any file has at least the id of its path. So if you create a file: _footer.html, then you can find it with the `partial` command, i.e. `{{partial "_footer.html"}}`
 
 The id is literally the path to that file (always absolute path), so to get to a tidbit of code in `_src/some/sub/dir/_partial.md` you would use `{{partial "some/sub/dir/_partial.md"}}`. NOTE the missing `_src`, the root is omitted in all ids, because the only thing that actually changes is the root, from _src to _dest.
 
