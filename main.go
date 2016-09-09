@@ -3,7 +3,6 @@ package main
 import "flag"
 import "fmt"
 import "io/ioutil"
-import "os"
 import "errors"
 import "strings"
 
@@ -15,6 +14,7 @@ type FileEntry struct {
 	dest string
 	url  string
 	id   string
+	path string
 }
 
 type Settings struct {
@@ -39,6 +39,9 @@ func main() {
 		action      = flag.String("action", "compile", "compile|routes")
 		url         = flag.String("url", "http://localhost", "the url of your site")
 		show_layout = flag.Bool("layout", false, "echo the default template")
+		gen_page	= flag.Bool("g",false,"Generate a file")
+		gen_path 	= flag.String("p","./_src/un-named.md","The file to generate")
+		gen_type	= flag.String("t","md","the type to generate")
 	)
 
 	flag.Parse()
@@ -46,7 +49,17 @@ func main() {
 		fmt.Println(DefaultLayout())
 		return
 	}
+	
+	if *gen_page == true {
+		GenerateFile(*gen_path,*gen_type);
+		return
+	}
+
 	s := Settings{indir: *indir, outdir: *outdir, url: *url}
+	if s.outdir[len(s.outdir)-1] == '/' || s.indir[len(s.indir)-1] == '/' {
+		fmt.Printf("\n\nNo trailing slashes in paths! \n\n")
+		return
+	}
 	s.file_ids = make(map[string]FileEntry)
 	s.fmap = make(map[string]interface{})
 	banner()
@@ -139,6 +152,7 @@ func discoverFileIds(s *Settings, p string) error {
 				dest: DestinationPath(*s, strings.Join(np, "/")),
 				id:   matches[1],
 				url:  DestinationURL(*s, strings.Join(np, "/")),
+				path: DestinationURLPath(*s,strings.Join(np, "/")),
 			}
 		} else {
 			src := strings.Join(np, "/")
@@ -150,6 +164,7 @@ func discoverFileIds(s *Settings, p string) error {
 				dest: DestinationPath(*s, strings.Join(np, "/")),
 				id:   fid,
 				url:  DestinationURL(*s, strings.Join(np, "/")),
+				path: DestinationURLPath(*s,strings.Join(np, "/")),
 			}
 
 		}
@@ -158,47 +173,4 @@ func discoverFileIds(s *Settings, p string) error {
 	return nil
 }
 
-func MakeDestinationPath(s Settings, p string) (string, error) {
-	var ps []string
-	var tps []string
-	var fpath string
-	ps = strings.Split(p, "/")
-	ps[0] = s.outdir
-	tps = ps[0 : len(ps)-1]
-	fpath = strings.Join(tps, "/")
-	err := os.MkdirAll(fpath, 0777)
-	if err != nil {
-		return "", err
-	}
-	return strings.Join(ps, "/"), nil
-}
 
-func DestinationPath(s Settings, p string) string {
-	var ps []string
-	ps = strings.Split(p, "/")
-	ps[0] = s.outdir
-	if IsMarkdown(p) {
-		return ConvertPath(s, strings.Join(ps, "/"), "html")
-	} else {
-		return ConvertPath(s, strings.Join(ps, "/"), FileType(p))
-	}
-
-}
-
-func DestinationURL(s Settings, p string) string {
-	var ps []string
-	if IsMarkdown(p) {
-		ps = strings.Split(ConvertPath(s, p, "html"), "/")
-	} else {
-		ps = strings.Split(ConvertPath(s, p, FileType(p)), "/")
-	}
-
-	ps[0] = s.url
-	return strings.Join(ps, "/")
-}
-
-func ConvertPath(s Settings, p string, t string) string {
-	parts := strings.Split(p, ".")
-	parts[len(parts)-1] = t
-	return strings.Join(parts, ".")
-}

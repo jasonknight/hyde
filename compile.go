@@ -5,7 +5,6 @@ import "errors"
 import "strings"
 import "io/ioutil"
 import "os"
-import "io"
 import "bytes"
 import "text/template"
 import "bufio"
@@ -28,7 +27,6 @@ func CompileDirectory(s Settings, p string) error {
 	for _, f := range flist {
 		np := []string{p, f.Name()}
 		fname := f.Name()
-		fmt.Println("!! fname = ", fname)
 		if fname[0] == '_' {
 			continue
 		}
@@ -52,30 +50,7 @@ func CompileDirectory(s Settings, p string) error {
 
 	return nil
 }
-func MoveFile(s Settings, p string) error {
-	dpath, err := MakeDestinationPath(s, p)
-	dfile := ConvertPath(s, dpath, FileType(p))
-	in, err := os.Open(p)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-	out, err := os.Create(dfile)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		cerr := out.Close()
-		if err == nil {
-			err = cerr
-		}
-	}()
-	if _, err = io.Copy(out, in); err != nil {
-		return err
-	}
-	err = out.Sync()
-	return err
-}
+
 func CompileFile(s Settings, p string) error {
 	fmt.Printf("CompileFile [%s]\n", p)
 	var should_layout bool
@@ -93,7 +68,7 @@ func CompileFile(s Settings, p string) error {
 	if IsCSS(p) || IsJS(p) {
 		should_layout = false
 	}
-	fmt.Printf("Destination: %s => %s\n", dpath, dfile)
+	fmt.Printf("Destination: %s => %s\n", p, dpath)
 
 	compiled, err := CompileGoTemplate(s, p, should_layout)
 
@@ -137,7 +112,7 @@ func CompileGoString(s Settings, name string, text string, should_layout bool) (
 			if len(line) > 2 && line[0] == '#' && line[1] == '!' {
 				l2exe := line[3:len(line)]
 				l2exe = fmt.Sprintf("{{%s}}", l2exe)
-				fmt.Println("Prepending ", l2exe)
+				//fmt.Println("Prepending ", l2exe)
 				s.prepends = append(s.prepends, l2exe)
 				continue
 			}
@@ -149,7 +124,7 @@ func CompileGoString(s Settings, name string, text string, should_layout bool) (
 		text = strings.Join(s.prepends, "\n") + "\n" + text
 	}
 
-	fmt.Println("Text to compile is: ", text)
+	//fmt.Println("Text to compile is: ", text)
 	tmpl, err := template.New(name).Funcs(s.fmap).Parse(text)
 
 	if err != nil {
